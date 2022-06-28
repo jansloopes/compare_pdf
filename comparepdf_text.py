@@ -17,6 +17,7 @@ import os
 import sys
 from difflib import SequenceMatcher
 from pathlib import Path
+import locale
 
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
@@ -184,8 +185,20 @@ def convertMultiple(pdfDir, txtDir):
 # https://iq.opengenus.org/difflib-module-in-python/
 #
 
+def get_seperator():
+    """get seperator of figure comma or dot.
 
-def compare_txt_file(txtDir1, result_file, result_highscore_file, high_score, files_dict):
+    Returns:
+        char : comma separator
+    """
+    locale.setlocale(locale.LC_ALL, '')
+    local_dict = locale.localeconv()
+    separator = local_dict['decimal_point']
+    print (f"seperator is {separator}")
+    return (str(separator))
+# end of get_seperator
+
+def compare_txt_file(txtDir1, result_file, result_highscore_file, high_score, files_dict,separator):
     """_summary_
 
     Args:
@@ -195,6 +208,7 @@ def compare_txt_file(txtDir1, result_file, result_highscore_file, high_score, fi
         result_highscore_file (_str_): _file with result high matching score_
         high_score (_float_): _score above which fraud is suspected_
         files_dict (dict) : dictionary with filename txt and pdf to connect them
+        separator (char) : separator used in figures amounts
     """
     path1 = Path(txtDir1)
     #print(f"the path1 is {path1}\n")
@@ -204,12 +218,12 @@ def compare_txt_file(txtDir1, result_file, result_highscore_file, high_score, fi
     the_list2 = list(path1.rglob('*.txt'))
     #print(f"the list1 and list 2 are {the_list1}")
     try:
-        result_file_fp = open(result_file, mode= 'a')
+        result_file_fp = open(result_file,  newline='', mode= 'a')
     except (IOError, OSError) as e:
             print(f"Error writing to file{e.errno} {e.strerror}\n")
             sys.exit()     
     try:
-        result_highscore_file_fp = open(result_highscore_file, mode ='a')
+        result_highscore_file_fp = open(result_highscore_file,  newline='', mode ='a')
     except (IOError, OSError) as e:
             print(f"Error writing to file{e.errno} {e.strerror}\n")
             sys.exit()
@@ -222,11 +236,14 @@ def compare_txt_file(txtDir1, result_file, result_highscore_file, high_score, fi
                 file2_content = Path(file2).read_text(encoding='utf-8')
                 seq = SequenceMatcher(None, file1_content, file2_content)
                 score = seq.ratio()
+                score_str = str(round(score,2))
+                score_str = score_str.replace(".", separator)
+#               print (f"score is {score} separator is {separator} score_str is {score_str}\n")
 #               print(f"difference of file {file1.stem} and {file2.stem} is {score}")
                 list_csv=[]
                 list_csv.append(files_dict[str(file1)])
                 list_csv.append(files_dict[str(file2)])
-                list_csv.append((round(score,2)))
+                list_csv.append(score_str)
                 writer_score.writerow(list_csv)
                 if score > high_score:
                     writer_high_score.writerow(list_csv)
@@ -249,6 +266,9 @@ def main():
     # check dir txt files
     check_dir(args.txtdir1)
     
+    #
+    separator = get_seperator()
+    
     ## open csv files
     header = ['file1.pdf','file2.pdf' 'score']
     csv_write_file(args.result_file,header)
@@ -260,7 +280,7 @@ def main():
     files_dict = convertMultiple(args_dict["pdfdir1"], args.txtdir1)
     # print(f" file type is {type(files_dict)}")     
     # check match ratio
-    compare_txt_file(args.txtdir1, args.result_file,args.result_highscore_file, args.high_score,files_dict)
+    compare_txt_file(args.txtdir1, args.result_file,args.result_highscore_file, args.high_score,files_dict,separator)
 
 # Using the special variable 
 # __name__
