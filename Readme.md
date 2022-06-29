@@ -1,7 +1,7 @@
 # Python 3.9 program to check similarity between pdf files.
 
 It scans a directory for pdf  files and convert them into txt files.
-These txt files are compared and the score is writen to a csv file.
+These txt files are compared and the score is written to a csv file.
 The PDF files are converted to txt files and stored in a seperate directory
 All txt files are compared and the score is stored in two  result files:
 1. all similarity scores
